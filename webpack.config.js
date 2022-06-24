@@ -35,7 +35,7 @@ module.exports = {
     externals: {
         // global app config object
         config: JSON.stringify({
-            apiUrl: 'http://frogslayerdeliverydashboard.azurewebsites.net/'
+            apiUrl: 'https://frogslayerdeliverydashboard.azurewebsites.net/'
         })
     }
 }
