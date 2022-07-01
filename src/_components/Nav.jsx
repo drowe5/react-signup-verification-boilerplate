@@ -21,6 +21,7 @@ function Nav() {
                 <div className="navbar-nav">
                     <NavLink exact to="/" className="nav-item nav-link">Home</NavLink>
                     <NavLink to="/profile" className="nav-item nav-link">Profile</NavLink>
+                    <NavLink to="/harvest" className="nav-item nav-link">Harvest</NavLink>
                     {user.role === Role.Admin &&
                         <NavLink to="/admin" className="nav-item nav-link">Admin</NavLink>
                     }
