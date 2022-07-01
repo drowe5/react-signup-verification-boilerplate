@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import useScript from 'hooks/useScript';
+import useScript from '@/hooks/useScript';
 
 function ProjectTargets({ match }) {
     const { path } = match;
