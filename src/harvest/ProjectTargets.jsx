@@ -1,19 +1,33 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { unstable_renderSubtreeIntoContainer } from 'react-dom/cjs/react-dom.development';
 import { Link } from 'react-router-dom';
+import Select from 'react-select'
 
 function ProjectTargets({ match }) {
     const { path } = match;
+    const [projects, setProjects] = useState('');
+    const [selectedProject, setSelectedProject] = useState('');
 
-    useEffect(() => {
-        //const subscription = accountService.user.subscribe(x => setUser(x));
-        //return subscription.unsubscribe;
-        alert("hi");
-    google.charts.load('current', {packages:['corechart']});
-    google.charts.setOnLoadCallback(loadAllProjects);
-
-    }, []);
-
+      // Function to collect data
+      const getApiData = async () => {
+        const response = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Project/get3",
+        {
+            "method": "GET"
+        })
+        .then((response) => response.json());
     
+        console.log(response.projects);
+        setProjects(response.projects);
+      };
+      
+      useEffect(() => {
+        google.charts.load('current', {packages:['corechart']});
+        //google.charts.setOnLoadCallback(loadAllProjects);
+        getApiData();
+        }, []);
+
+
+
   var nameElement = document.getElementById('name');
   var genderElement = document.getElementById('gender');
 
@@ -82,15 +96,22 @@ populateDropdown(projectsArr, "dropdownContainer", onProjectSelected);
 }
 
 async function loadTargetsForProjectId(projectId){
-var stat = document.getElementById('infoboxName');
+    console.log("Load Targets for Project: " + projectId);
+//var stat = document.getElementById('infoboxName');
 
-var apiResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/get3?from=2022-06-19&to=2022-06-25&projectId="+projectId);
+//var apiResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/get3?from=2022-06-19&to=2022-06-25&projectId="+projectId);
+const apiResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/get3?from=2022-06-19&to=2022-06-25&projectId="+projectId,
+        {
+            "method": "GET"
+        });
+//        .then((response) => response.json());
+        
 var jsonParsedContents = await apiResponse.json(); // This is also a promise so must also wait for it
 console.log(jsonParsedContents); // Do whatever you need with the object
 
 //  nameElement.textContent = jsonParsedContents.totalEntries;
 //  genderElement.textContent = jsonParsedContents.timesheets[0].username;
-  
+console.log("HERE");  
   
   var oldData = google.visualization.arrayToDataTable([
       ['Name', 'Popularity'],
@@ -124,9 +145,15 @@ console.log(map1.get("Dusty Rowe"));
 
 
 
-var apiTargetsResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/gettargets?from=2022-06-19&to=2022-06-25&projectId="+projectId);
+var apiTargetsResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/gettargets?from=2022-06-19&to=2022-06-25&projectId="+projectId,
+{
+    "method": "GET"
+});
+//.then((response) => response.json());
+
 var jsonParsedContentsTargets = await apiTargetsResponse.json(); // This is also a promise so must also wait for it
 
+console.log("TREE");
 const mapTarget = new Map();
 
 for (const ts of jsonParsedContentsTargets.timesheets) {
@@ -150,6 +177,7 @@ const targets = [];
 hours.push(["Name", "Hours"]);
 targets.push(["Name", "Hours"]);
 
+var i=0;
 for(i=0; i<keys.length; i++)
 {
 	hours.push([keys[i], values[i]]);
@@ -179,26 +207,71 @@ console.log(targets);
   colChartBefore.draw(diffData, options);
     
 }
+function projectsSelectOptions()
+{
+    /*
+    const options = [
+        { value: 'chocolate', label: 'Chocolate' },
+        { value: 'strawberry', label: 'Strawberry' },
+        { value: 'vanilla', label: 'Vanilla' }
+      ];
+      */
+      const options = [];
+      if (projects)
+      {
+        console.log(projects);
+        console.log(projects?.length);
+        for (const project of projects) {
+            options.push({value: project.projectId, label: project.projectName});
+        }
+        //options.push({value: 'a', label: selectedProject+''});
+        
+      }
 
+      console.log(options);
+      return options;
+}
+
+function onSelectedProjectChange(selectedProjectItem) {
+    //store selected option in state
+    console.log("A");
+    console.log(selectedProjectItem);
+    if ( selectedProjectItem )
+    {
+        console.log("B");
+        setSelectedProject(selectedProjectItem);
+    }
+    console.log(selectedProject);
+    console.log("c");
+    console.log(selectedProjectItem);
+    console.log("C");
+    //alert(selectedMaterialunit);
+
+    loadTargetsForProjectId(selectedProjectItem.value);
+  }
+  
+  function materialUnitOptions() {
+    return this.state.materialunit.map(materialUnit => (
+      {
+        value: materialUnit.materialunitID,
+        label: `${materialUnit.unitName}:${materialUnit.materialName}`
+      }
+     ))
+  }
 
     return (
-        <div>
+        <div style={{ width: "100%" }}>
 
-            <h1>Admin</h1>
-            <p>This section can only be accessed by administrators 2.</p>
-            <p><Link to={`${path}/users`}>Manage Users</Link></p>
+<h1>Project Targets</h1>
+            <p>View user target hours vs actual entered hours for the selected project.</p>
 
+            <Select
+                value={selectedProject}
+                options={projectsSelectOptions()}
+                onChange={onSelectedProjectChange}
+            />
 
-  Project: <div id="dropdownContainer"></div>
-  
-  <span id='colchart_before' ></span>
-  
-
-  <div id='infoboxName'>
-  <span id='name'>default</span>
-  <p/>
-  <span id='gender'></span>
-</div>
+  <span id='colchart_before' style={{ width: 750, height: 250, display: 'inline-block' }}></span>
 
         </div>
     );
