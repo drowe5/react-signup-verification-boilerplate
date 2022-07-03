@@ -20,6 +20,7 @@
         "react-dom": "^16.8.6",
         "react-router-dom": "^5.0.0",
         "react-select": "^5.4.0",
+        "rsuite": "^5.15.2",
         "rxjs": "^6.3.3",
         "yup": "^0.28.1"
     },

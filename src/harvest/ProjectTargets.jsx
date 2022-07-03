@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { unstable_renderSubtreeIntoContainer } from 'react-dom/cjs/react-dom.development';
 import { Link } from 'react-router-dom';
 import Select from 'react-select'
+import 'rsuite/dist/rsuite.min.css';
+import { DateRangePicker } from 'rsuite';
+
 
 function ProjectTargets({ match }) {
     const { path } = match;
     const [projects, setProjects] = useState('');
     const [selectedProject, setSelectedProject] = useState('');
+    const [datesSelected, setDatesSelected] = useState([new Date('2022-07-01'), new Date('2022-07-08')]);
 
       // Function to collect data
       const getApiData = async () => {
@@ -21,86 +25,36 @@ function ProjectTargets({ match }) {
       };
       
       useEffect(() => {
+        console.log("starting useEffect()");
+        var lastMonday = getNextDayOfWeek(addDays(new Date(), -7), 1);
+        var nextSunday = getNextDayOfWeek(addDays(new Date(), 1), 0);
+        //alert(lastMonday);
+        //alert(nextSunday);
+        setDatesSelected([lastMonday, nextSunday]);
+
         google.charts.load('current', {packages:['corechart']});
         //google.charts.setOnLoadCallback(loadAllProjects);
         getApiData();
         }, []);
 
 
+        function addDays(date, days) {
+          var result = new Date(date);
+          result.setDate(result.getDate() + days);
+          return result;
+        }
 
-  var nameElement = document.getElementById('name');
-  var genderElement = document.getElementById('gender');
-
-//  alert(nameElement?.innerText);
-function onProjectSelected(sender) {
-	//console.log(sender);
-  var selectElement = sender.target;
-  var selectedProjectId = selectElement.options[selectElement.selectedIndex].value;
-	//alert("Project selected: "+selectedProjectId);
-  loadTargetsForProjectId(selectedProjectId);
-}
-
-
-function removeAllChildNodes(parent) {
-    while (parent.firstChild) {
-        parent.removeChild(parent.firstChild);
-    }
-}
-
-function populateDropdown(values, htmlElementName, onchangeCallback) {
- 
-//    var values = ["dog", "cat", "parrot", "rabbit"];
- 		var parent = document.getElementById(htmlElementName);
-    if (parent) {
-    	removeAllChildNodes(parent);
-    }
- 
-    var select = document.createElement("select");
-    select.name = "select_"+htmlElementName;
-    select.id = "select_"+htmlElementName;
-    select.onchange = onchangeCallback;
- 
- 	  //Add a default option/placeholder
-    var option = document.createElement("option");
-    option.value = 0;
-    option.text = "Select Project";
-    select.appendChild(option);
-
-    for (const val of values)
-    {
-        var option = document.createElement("option");
-        option.value = val[1];
-        option.text = val[0];
-        select.appendChild(option);
-    }
-  
-//    document.getElementById("dropdownContainer").appendChild(label).appendChild(select);
-    document.getElementById(htmlElementName).appendChild(select);
-
-}
-
-async function loadAllProjects() {
-var apiProjectsResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Project/get3");
-var jsonParsedContentsProjects = await apiProjectsResponse.json(); 
-
-
-//var projectId = jsonParsedContentsProjects.projects[1].projectId;
-//console.log(projectId);
-
-const projectsArr = [];
-for (const project of jsonParsedContentsProjects.projects) {
-	projectsArr.push([project.projectName, project.projectId]);
-}
-
-populateDropdown(projectsArr, "dropdownContainer", onProjectSelected);
-}
-
-async function loadTargetsForProjectId(projectId){
+async function loadTargetsForProjectId(projectId, from, to){
     console.log("Load Targets for Project: " + projectId);
+    console.log("from: " + from + "  to: " + to);
+    var from_ = from.getFullYear() + '-' + ("00" + (from.getMonth()+1)).slice(-2) + '-' + ("00" + (from.getDate())).slice(-2);
+    var to_ = to.getFullYear() + '-' + ("00" + (to.getMonth()+1)).slice(-2) + '-' + ("00" + (to.getDate())).slice(-2);
+    console.log("from_: " + from_ + "  to_: " + to_);
+
 //var stat = document.getElementById('infoboxName');
 
 //var apiResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/get3?from=2022-06-19&to=2022-06-25&projectId="+projectId);
-const apiResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/get3?from=2022-06-19&to=2022-06-25&projectId="+projectId,
+const apiResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/get3?from="+from_+"&to="+to_+"&projectId="+projectId,
         {
             "method": "GET"
         });
@@ -109,8 +63,6 @@ const apiResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsit
 var jsonParsedContents = await apiResponse.json(); // This is also a promise so must also wait for it
 console.log(jsonParsedContents); // Do whatever you need with the object
 
-//  nameElement.textContent = jsonParsedContents.totalEntries;
-//  genderElement.textContent = jsonParsedContents.timesheets[0].username;
 console.log("HERE");  
   
   var oldData = google.visualization.arrayToDataTable([
@@ -216,6 +168,7 @@ function projectsSelectOptions()
         { value: 'vanilla', label: 'Vanilla' }
       ];
       */
+     console.log("starting projectsSelectOptions");
       const options = [];
       if (projects)
       {
@@ -247,16 +200,35 @@ function onSelectedProjectChange(selectedProjectItem) {
     console.log("C");
     //alert(selectedMaterialunit);
 
-    loadTargetsForProjectId(selectedProjectItem.value);
+    loadTargetsForProjectId(selectedProjectItem.value, datesSelected[0], datesSelected[1]);
   }
   
-  function materialUnitOptions() {
-    return this.state.materialunit.map(materialUnit => (
-      {
-        value: materialUnit.materialunitID,
-        label: `${materialUnit.unitName}:${materialUnit.materialName}`
-      }
-     ))
+  function getLastMonday(date) {
+    // Copy date so don't modify original
+    let d = new Date(date);
+    // Adjust to previous Saturday
+    d.setDate(d.getDate() - (d.getDay() + 1));
+    return d;
+  }
+
+  function getNextDayOfWeek(d, dow){
+    d.setDate(d.getDate() + (dow+(7-d.getDay())) % 7);
+    return d;
+}
+
+  function onDateSelectedChange(value)
+  {
+    if ( value )
+    {
+      console.log(value);
+      /////var from = value[0].getFullYear() + '-' + ("00" + (value[0].getMonth()+1)).slice(-2) + '-' + ("00" + (value[0].getDate())).slice(-2);
+      /////var to = value[1].getFullYear() + '-' + ("00" + (value[1].getMonth()+1)).slice(-2) + '-' + ("00" + (value[1].getDate())).slice(-2);
+      /////console.log("from: " + from);
+      /////console.log("to: " + to);
+      //setDatesSelected([new Date(from), new Date(to)]);
+      setDatesSelected(value);
+      loadTargetsForProjectId(selectedProject.value, value[0], value[1]);
+    }
   }
 
     return (
@@ -265,6 +237,14 @@ function onSelectedProjectChange(selectedProjectItem) {
 <h1>Project Targets</h1>
             <p>View user target hours vs actual entered hours for the selected project.</p>
 
+            <DateRangePicker 
+              value={datesSelected}
+              onChange={onDateSelectedChange}
+              oneTap 
+              showOneCalendar 
+              hoverRange="week" 
+              ranges={[]} 
+              />
             <Select
                 value={selectedProject}
                 options={projectsSelectOptions()}
