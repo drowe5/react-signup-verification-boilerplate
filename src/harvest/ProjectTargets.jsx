@@ -97,7 +97,7 @@ console.log(map1.get("Dusty Rowe"));
 
 
 
-var apiTargetsResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/gettargets?from=2022-06-19&to=2022-06-25&projectId="+projectId,
+var apiTargetsResponse = await fetch("https://frogslayerdeliverydashboard.azurewebsites.net/Timesheet/gettargets?from="+from_+"&to="+to_+"&projectId="+projectId,
 {
     "method": "GET"
 });
@@ -242,6 +242,7 @@ function onSelectedProjectChange(selectedProjectItem) {
               onChange={onDateSelectedChange}
               oneTap 
               showOneCalendar 
+              isoWeek="true"
               hoverRange="week" 
               ranges={[]} 
               />
