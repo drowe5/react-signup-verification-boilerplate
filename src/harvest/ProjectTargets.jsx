@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import Select from 'react-select'
 import 'rsuite/dist/rsuite.min.css';
 import { DateRangePicker } from 'rsuite';
+import { startOfDay, endOfDay, addDays, subDays, startOfISOWeek, endOfISOWeek } from 'date-fns';
 
 
 function ProjectTargets({ match }) {
@@ -26,8 +27,10 @@ function ProjectTargets({ match }) {
       
       useEffect(() => {
         console.log("starting useEffect()");
-        var lastMonday = getNextDayOfWeek(addDays(new Date(), -7), 1);
-        var nextSunday = getNextDayOfWeek(addDays(new Date(), 1), 0);
+        //var lastMonday = getNextDayOfWeek(addDays(new Date(), -7), 1);
+        //var nextSunday = getNextDayOfWeek(addDays(new Date(), 1), 0);
+        var lastMonday = startOfISOWeek(new Date(), {weekStartsOn: 1});
+        var nextSunday = endOfISOWeek(new Date(), {weekStartsOn: 1});
         //alert(lastMonday);
         //alert(nextSunday);
         setDatesSelected([lastMonday, nextSunday]);
@@ -37,12 +40,13 @@ function ProjectTargets({ match }) {
         getApiData();
         }, []);
 
-
+/*
         function addDays(date, days) {
           var result = new Date(date);
           result.setDate(result.getDate() + days);
           return result;
         }
+*/
 
 async function loadTargetsForProjectId(projectId, from, to){
     console.log("Load Targets for Project: " + projectId);
@@ -203,6 +207,7 @@ function onSelectedProjectChange(selectedProjectItem) {
     loadTargetsForProjectId(selectedProjectItem.value, datesSelected[0], datesSelected[1]);
   }
   
+/*
   function getLastMonday(date) {
     // Copy date so don't modify original
     let d = new Date(date);
@@ -210,11 +215,11 @@ function onSelectedProjectChange(selectedProjectItem) {
     d.setDate(d.getDate() - (d.getDay() + 1));
     return d;
   }
-
   function getNextDayOfWeek(d, dow){
     d.setDate(d.getDate() + (dow+(7-d.getDay())) % 7);
     return d;
 }
+*/
 
   function onDateSelectedChange(value)
   {
@@ -244,7 +249,16 @@ function onSelectedProjectChange(selectedProjectItem) {
               showOneCalendar 
               isoWeek="true"
               hoverRange="week" 
-              ranges={[]} 
+              ranges={[
+                {
+                  label: 'this week',
+                  value: [startOfISOWeek(new Date(), {weekStartsOn: 1}), endOfISOWeek(new Date(), {weekStartsOn: 1})]
+                },
+                {
+                  label: 'last week',
+                  value: [startOfISOWeek(subDays(new Date(),7), {weekStartsOn: 1}), endOfISOWeek(subDays(new Date(), 7), {weekStartsOn: 1})]
+                }
+              ]} 
               />
             <Select
                 value={selectedProject}
